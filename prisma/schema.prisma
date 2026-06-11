@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model GithubRepo {
+  id             String   @id @default(cuid())
+  owner          String
+  name           String
+  fullName       String   @unique
+  htmlUrl        String   @unique
+  description    String?  @db.Text
+  readmeText     String?  @db.Text
+  language       String
+  stars          Int      @default(0)
+  forks          Int      @default(0)
+  openIssues     Int      @default(0)
+  license        String?
+  topics         String[] @default([])
+  summary        String   @db.Text
+  category       String
+  tags           String[] @default([])
+  analysisReason String   @db.Text
+  analyzedAt     DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([category])
+  @@index([owner, name])
+  @@index([analyzedAt])
+}
