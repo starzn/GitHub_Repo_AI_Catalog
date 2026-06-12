@@ -1,18 +1,22 @@
+import { Navbar } from "@/components/Navbar";
+
 export default function RepoDetailLoading() {
   return (
-    <main className="min-h-screen bg-zinc-950 px-6 py-14 text-zinc-50 sm:py-20">
-      <section className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-        <div className="h-10 w-40 animate-pulse rounded-full bg-white/10" />
-        <div className="h-48 animate-pulse rounded-[2rem] bg-white/[0.04]" />
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, index) => (
-            <div
-              key={index}
-              className="h-28 animate-pulse rounded-3xl bg-white/[0.04]"
-            />
-          ))}
-        </div>
-      </section>
-    </main>
+    <>
+      <Navbar />
+      <main className="min-h-[100dvh] bg-background px-6 pb-20 text-foreground">
+        <section className="mx-auto max-w-7xl pt-12">
+          <div className="space-y-5">
+            <div className="h-10 w-56 animate-shimmer rounded-xl" />
+            <div className="h-44 animate-shimmer rounded-2xl" />
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="h-24 animate-shimmer rounded-xl" />
+              ))}
+            </div>
+          </div>
+        </section>
+      </main>
+    </>
   );
 }

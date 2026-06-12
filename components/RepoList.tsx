@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { MagnifyingGlassIcon, FunnelIcon, XIcon } from "@phosphor-icons/react";
 
 import { REPO_CATEGORIES } from "@/src/lib/repo-categories";
 import type { ApiErrorResponse, RepoListItem, RepoListResponse } from "@/types/repo";
@@ -99,29 +100,35 @@ export function RepoList() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <form
-        className="grid gap-4 rounded-3xl border border-white/10 bg-white/3 p-5 md:grid-cols-[1fr_220px_auto]"
+        className="flex flex-wrap gap-3"
         onSubmit={(event) => {
           event.preventDefault();
           const formData = new FormData(event.currentTarget);
           updateSearchParams(category, String(formData.get("keyword") ?? ""));
         }}
       >
-        <label className="space-y-2">
-          <span className="text-sm font-medium text-zinc-200">关键词搜索</span>
+        <div className="relative min-w-[240px] flex-1">
+          <MagnifyingGlassIcon
+            size={16}
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-tertiary"
+          />
           <input
             key={keyword}
             ref={keywordInputRef}
             name="keyword"
             defaultValue={keyword}
             placeholder="搜索仓库名、描述、总结、语言或标签"
-            className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-500 focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20"
+            className="w-full rounded-xl border border-border bg-surface py-2.5 pl-10 pr-4 text-sm text-white outline-none transition placeholder:text-text-tertiary focus:border-accent/40 focus:ring-1 focus:ring-accent/20"
           />
-        </label>
+        </div>
 
-        <label className="space-y-2">
-          <span className="text-sm font-medium text-zinc-200">分类筛选</span>
+        <div className="relative">
+          <FunnelIcon
+            size={16}
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-tertiary"
+          />
           <select
             value={category}
             onChange={(event) =>
@@ -130,7 +137,7 @@ export function RepoList() {
                 keywordInputRef.current?.value ?? keyword,
               )
             }
-            className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none transition focus:border-cyan-400/50 focus:ring-2 focus:ring-cyan-400/20"
+            className="appearance-none rounded-xl border border-border bg-surface py-2.5 pl-10 pr-10 text-sm text-white outline-none transition focus:border-accent/40 focus:ring-1 focus:ring-accent/20"
           >
             <option value="">全部分类</option>
             {REPO_CATEGORIES.map((item) => (
@@ -139,73 +146,64 @@ export function RepoList() {
               </option>
             ))}
           </select>
-        </label>
-
-        <div className="flex items-end gap-3">
-          <button
-            type="submit"
-            className="rounded-full bg-cyan-400 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-cyan-300"
-          >
-            搜索
-          </button>
-
-          {hasFilters ? (
-            <button
-              type="button"
-              onClick={() => {
-                if (keywordInputRef.current) {
-                  keywordInputRef.current.value = "";
-                }
-                updateSearchParams("", "");
-              }}
-              className="rounded-full border border-white/10 px-5 py-3 text-sm font-medium text-zinc-200 transition hover:border-white/20 hover:bg-white/5"
-            >
-              清空
-            </button>
-          ) : null}
         </div>
+
+        {hasFilters && (
+          <button
+            type="button"
+            onClick={() => {
+              if (keywordInputRef.current) {
+                keywordInputRef.current.value = "";
+              }
+              updateSearchParams("", "");
+            }}
+            className="flex items-center gap-1.5 rounded-xl border border-border px-4 py-2.5 text-sm text-text-secondary transition hover:border-white/15 hover:text-white"
+          >
+            <XIcon size={14} />
+            清空筛选
+          </button>
+        )}
       </form>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-zinc-400">
-        <p>共收录 {total} 个已分析仓库，默认按 Stars 降序展示。</p>
-        <p>支持分类筛选与关键词检索。</p>
-      </div>
+      <p className="text-sm text-text-tertiary">
+        共 {total} 个仓库，按 Stars 降序
+      </p>
 
-      {loading ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, index) => (
+      {loading && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
             <div
-              key={index}
-              className="h-72 animate-pulse rounded-3xl border border-white/10 bg-white/3"
+              key={i}
+              className="h-64 animate-shimmer rounded-2xl border border-border"
             />
           ))}
         </div>
-      ) : null}
+      )}
 
-      {!loading && error ? (
-        <div className="rounded-3xl border border-rose-400/30 bg-rose-400/10 p-6 text-sm text-rose-100">
+      {!loading && error && (
+        <div className="rounded-xl border border-rose-500/20 bg-rose-500/8 p-5 text-sm text-rose-200">
           {error}
         </div>
-      ) : null}
+      )}
 
-      {!loading && !error && items.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-white/15 bg-black/20 p-10 text-center">
-          <h2 className="text-xl font-semibold text-white">暂无匹配仓库</h2>
-          <p className="mt-3 text-sm leading-6 text-zinc-400">
+      {!loading && !error && items.length === 0 && (
+        <div className="rounded-xl border border-dashed border-border py-20 text-center">
+          <p className="text-lg font-medium text-white">暂无匹配仓库</p>
+          <p className="mt-2 text-sm text-text-tertiary">
             {hasFilters
               ? "当前筛选条件下没有结果，请尝试更换分类或关键词。"
               : "还没有分析过仓库，先回到首页提交一个 GitHub 地址吧。"}
           </p>
         </div>
-      ) : null}
+      )}
 
-      {!loading && !error && items.length > 0 ? (
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+      {!loading && !error && items.length > 0 && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((repo) => (
             <RepoCard key={repo.id} repo={repo} />
           ))}
         </div>
-      ) : null}
+      )}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowUpRightIcon, StarIcon } from "@phosphor-icons/react";
 
 import type { RepoListItem } from "@/types/repo";
 
@@ -19,49 +20,47 @@ function formatDate(value: string) {
 
 export function RepoCard({ repo }: RepoCardProps) {
   return (
-    <article className="flex h-full flex-col rounded-3xl border border-white/10 bg-white/[0.03] p-6 shadow-lg shadow-black/20 transition hover:-translate-y-0.5 hover:border-cyan-400/30 hover:bg-white/[0.05]">
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-3">
-          <CategoryBadge category={repo.category} compact />
-          <div>
-            <Link
-              href={`/repos/${repo.id}`}
-              className="text-xl font-semibold text-white transition hover:text-cyan-200"
-            >
-              {repo.fullName}
-            </Link>
-            <p className="mt-2 text-sm leading-6 text-zinc-400">
-              {repo.description || "该仓库暂未提供描述。"}
-            </p>
-          </div>
-        </div>
-
+    <article className="group relative flex h-full flex-col rounded-2xl border border-border bg-surface p-6 transition hover:border-accent/15 hover:bg-surface-elevated">
+      <div className="flex items-start justify-between gap-3">
+        <CategoryBadge category={repo.category} compact />
         <a
           href={repo.htmlUrl}
           target="_blank"
           rel="noreferrer"
-          className="shrink-0 rounded-full border border-white/10 px-3 py-1 text-xs font-medium text-zinc-300 transition hover:border-cyan-400/30 hover:text-cyan-100"
+          className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-text-tertiary transition hover:text-accent"
         >
           GitHub
+          <ArrowUpRightIcon size={12} />
         </a>
       </div>
 
-      <p className="mt-5 text-sm leading-6 text-zinc-200">{repo.summary}</p>
+      <div className="mt-4">
+        <Link
+          href={`/repos/${repo.id}`}
+          className="text-lg font-semibold text-white transition hover:text-accent"
+        >
+          {repo.fullName}
+        </Link>
+        <p className="mt-2 text-sm leading-6 text-text-secondary line-clamp-2">
+          {repo.description || "该仓库暂未提供描述。"}
+        </p>
+      </div>
 
-      <div className="mt-5">
+      <p className="mt-4 text-sm leading-6 text-text-primary line-clamp-3">
+        {repo.summary}
+      </p>
+
+      <div className="mt-4">
         <TagList tags={repo.tags} compact />
       </div>
 
-      <div className="mt-auto flex flex-wrap gap-3 pt-6 text-xs text-zinc-400">
-        <span className="rounded-full border border-white/10 px-3 py-1">
-          语言: {repo.language}
+      <div className="mt-auto flex items-center gap-4 pt-5 text-xs text-text-tertiary">
+        <span className="flex items-center gap-1">
+          <StarIcon size={13} weight="fill" className="text-amber-400" />
+          {repo.stars.toLocaleString("zh-CN")}
         </span>
-        <span className="rounded-full border border-white/10 px-3 py-1">
-          Stars: {repo.stars.toLocaleString("zh-CN")}
-        </span>
-        <span className="rounded-full border border-white/10 px-3 py-1">
-          更新于 {formatDate(repo.updatedAt)}
-        </span>
+        <span>{repo.language}</span>
+        <span className="ml-auto">{formatDate(repo.updatedAt)}</span>
       </div>
     </article>
   );

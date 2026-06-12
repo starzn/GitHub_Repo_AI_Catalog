@@ -10,10 +10,18 @@ export function CategoryBadge({
   return (
     <span
       className={[
-        "inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-400/10 font-medium text-cyan-100",
-        compact ? "px-2.5 py-1 text-xs" : "px-3 py-1 text-sm",
+        "inline-flex items-center gap-1.5 rounded-md font-medium text-accent",
+        compact
+          ? "bg-accent-muted px-2 py-0.5 text-xs"
+          : "bg-accent-muted px-2.5 py-1 text-sm",
       ].join(" ")}
     >
+      <span
+        className={[
+          "rounded-full bg-accent",
+          compact ? "h-1.5 w-1.5" : "h-2 w-2",
+        ].join(" ")}
+      />
       {category}
     </span>
   );
