@@ -1,3 +1,4 @@
+import { Navbar } from "@/components/Navbar";
 import { RepoDetailView } from "@/components/RepoDetailView";
 
 type RepoDetailPageProps = {
@@ -12,10 +13,13 @@ export default async function RepoDetailPage({
   const { id } = await params;
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-6 py-14 text-zinc-50 sm:py-20">
-      <section className="mx-auto w-full max-w-7xl">
-        <RepoDetailView repoId={id} />
-      </section>
-    </main>
+    <>
+      <Navbar />
+      <main className="min-h-[100dvh] bg-background px-6 pb-20 text-foreground">
+        <section className="mx-auto max-w-7xl pt-12">
+          <RepoDetailView repoId={id} />
+        </section>
+      </main>
+    </>
   );
 }
