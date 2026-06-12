@@ -1,7 +1,21 @@
 import { Navbar } from "@/components/Navbar";
 import { RepoList } from "@/components/RepoList";
+import { getRepoList } from "@/src/lib/repo-list";
 
-export default function ReposPage() {
+type ReposPageProps = {
+  searchParams: Promise<{
+    category?: string;
+    keyword?: string;
+  }>;
+};
+
+export default async function ReposPage({ searchParams }: ReposPageProps) {
+  const params = await searchParams;
+  const initialData = await getRepoList({
+    category: params.category,
+    keyword: params.keyword,
+  });
+
   return (
     <>
       <Navbar />
@@ -16,7 +30,7 @@ export default function ReposPage() {
             </p>
           </div>
 
-          <RepoList />
+          <RepoList items={initialData.items} total={initialData.total} />
         </section>
       </main>
     </>

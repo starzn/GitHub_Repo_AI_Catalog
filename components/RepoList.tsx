@@ -1,83 +1,110 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { MagnifyingGlassIcon, FunnelIcon, XIcon } from "@phosphor-icons/react";
+import {
+  MagnifyingGlassIcon,
+  FunnelIcon,
+  XIcon,
+  CaretDownIcon,
+  CheckIcon,
+} from "@phosphor-icons/react";
 
 import { REPO_CATEGORIES } from "@/src/lib/repo-categories";
-import type { ApiErrorResponse, RepoListItem, RepoListResponse } from "@/types/repo";
+import type { RepoListItem } from "@/types/repo";
 
 import { RepoCard } from "./RepoCard";
 
-function getErrorMessage(payload: ApiErrorResponse | null) {
-  return payload?.error?.message ?? "仓库列表加载失败，请稍后重试。";
+function CategorySelect({
+  value,
+  onChange,
+  disabled = false,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  disabled?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen((v) => !v)}
+        className={[
+          "flex items-center gap-2 rounded-xl border py-2.5 pl-3.5 pr-3 text-sm outline-none transition disabled:cursor-not-allowed disabled:opacity-70",
+          open
+            ? "border-accent/40 ring-1 ring-accent/20 bg-surface text-white"
+            : "border-border bg-surface text-text-secondary hover:border-white/15 hover:text-white",
+        ].join(" ")}
+      >
+        <FunnelIcon size={16} weight="duotone" className="text-accent shrink-0" />
+        <span className="whitespace-nowrap">{value || "全部分类"}</span>
+        <CaretDownIcon
+          size={14}
+          className={["shrink-0 transition-transform duration-200", open && "rotate-180"].join(" ")}
+        />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 z-50 mt-1.5 w-44 origin-top animate-fade-in rounded-xl border border-border bg-surface-elevated py-1 shadow-xl shadow-black/30 backdrop-blur-sm">
+          <button
+            type="button"
+            onClick={() => { onChange(""); setOpen(false); }}
+            className="flex w-full items-center gap-2 px-3.5 py-2 text-sm transition-colors hover:bg-white/5"
+          >
+            <span className="flex h-4 w-4 shrink-0 items-center justify-center">
+              {!value && <CheckIcon size={14} weight="bold" className="text-accent" />}
+            </span>
+            全部分类
+          </button>
+          {REPO_CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => { onChange(cat); setOpen(false); }}
+              className="flex w-full items-center gap-2 px-3.5 py-2 text-sm transition-colors hover:bg-white/5"
+            >
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center">
+                {value === cat && <CheckIcon size={14} weight="bold" className="text-accent" />}
+              </span>
+              {cat}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
-export function RepoList() {
+type RepoListProps = {
+  items: RepoListItem[];
+  total: number;
+};
+
+export function RepoList({ items, total }: RepoListProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
   const category = searchParams.get("category") ?? "";
   const keyword = searchParams.get("keyword") ?? "";
 
-  const [items, setItems] = useState<RepoListItem[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const keywordInputRef = useRef<HTMLInputElement | null>(null);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    async function loadRepos() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const params = new URLSearchParams();
-
-        if (category) {
-          params.set("category", category);
-        }
-
-        if (keyword) {
-          params.set("keyword", keyword);
-        }
-
-        const query = params.toString();
-        const response = await fetch(`/api/repos${query ? `?${query}` : ""}`, {
-          cache: "no-store",
-          signal: controller.signal,
-        });
-        const payload = (await response.json()) as RepoListResponse | ApiErrorResponse;
-
-        if (!response.ok || !("items" in payload)) {
-          setItems([]);
-          setTotal(0);
-          setError(getErrorMessage(payload as ApiErrorResponse));
-          return;
-        }
-
-        setItems(payload.items);
-        setTotal(payload.total);
-      } catch (fetchError) {
-        if (fetchError instanceof DOMException && fetchError.name === "AbortError") {
-          return;
-        }
-
-        setItems([]);
-        setTotal(0);
-        setError("网络异常，暂时无法获取仓库列表。");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    void loadRepos();
-
-    return () => controller.abort();
-  }, [category, keyword]);
 
   const hasFilters = useMemo(
     () => Boolean(category || keyword.trim()),
@@ -96,97 +123,93 @@ export function RepoList() {
     }
 
     const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname);
+    const currentQuery = searchParams.toString();
+
+    if (query === currentQuery) {
+      return;
+    }
+
+    startTransition(() => {
+      router.replace(query ? `${pathname}?${query}` : pathname);
+    });
   }
 
   return (
     <div className="space-y-6">
-      <form
-        className="flex flex-wrap gap-3"
-        onSubmit={(event) => {
-          event.preventDefault();
-          const formData = new FormData(event.currentTarget);
-          updateSearchParams(category, String(formData.get("keyword") ?? ""));
-        }}
+      <div
+        className={[
+          "rounded-2xl p-2 transition-colors duration-200",
+          isPending ? "repo-filter-pending" : "",
+        ].join(" ")}
       >
-        <div className="relative min-w-[240px] flex-1">
-          <MagnifyingGlassIcon
-            size={16}
-            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-tertiary"
-          />
-          <input
-            key={keyword}
-            ref={keywordInputRef}
-            name="keyword"
-            defaultValue={keyword}
-            placeholder="搜索仓库名、描述、总结、语言或标签"
-            className="w-full rounded-xl border border-border bg-surface py-2.5 pl-10 pr-4 text-sm text-white outline-none transition placeholder:text-text-tertiary focus:border-accent/40 focus:ring-1 focus:ring-accent/20"
-          />
-        </div>
+        <form
+          aria-busy={isPending}
+          className={[
+            "flex flex-wrap gap-3 transition-opacity duration-200",
+            isPending ? "opacity-90" : "opacity-100",
+          ].join(" ")}
+          onSubmit={(event) => {
+            event.preventDefault();
+            const formData = new FormData(event.currentTarget);
+            updateSearchParams(category, String(formData.get("keyword") ?? ""));
+          }}
+        >
+          <div className="relative min-w-[240px] flex-1">
+            <MagnifyingGlassIcon
+              size={16}
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-tertiary"
+            />
+            <input
+              key={keyword}
+              ref={keywordInputRef}
+              name="keyword"
+              defaultValue={keyword}
+              placeholder="搜索仓库名、描述、总结、语言或标签"
+              disabled={isPending}
+              className="w-full rounded-xl border border-border bg-surface py-2.5 pl-10 pr-4 text-sm text-white outline-none transition placeholder:text-text-tertiary focus:border-accent/40 focus:ring-1 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-70"
+            />
+          </div>
 
-        <div className="relative">
-          <FunnelIcon
-            size={16}
-            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-tertiary"
-          />
-          <select
+          <CategorySelect
+            key={`${category}-${isPending ? "pending" : "idle"}`}
             value={category}
-            onChange={(event) =>
-              updateSearchParams(
-                event.target.value,
-                keywordInputRef.current?.value ?? keyword,
-              )
+            disabled={isPending}
+            onChange={(v) =>
+              updateSearchParams(v, keywordInputRef.current?.value ?? keyword)
             }
-            className="appearance-none rounded-xl border border-border bg-surface py-2.5 pl-10 pr-10 text-sm text-white outline-none transition focus:border-accent/40 focus:ring-1 focus:ring-accent/20"
-          >
-            <option value="">全部分类</option>
-            {REPO_CATEGORIES.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
-        </div>
+          />
 
-        {hasFilters && (
-          <button
-            type="button"
-            onClick={() => {
-              if (keywordInputRef.current) {
-                keywordInputRef.current.value = "";
-              }
-              updateSearchParams("", "");
-            }}
-            className="flex items-center gap-1.5 rounded-xl border border-border px-4 py-2.5 text-sm text-text-secondary transition hover:border-white/15 hover:text-white"
-          >
-            <XIcon size={14} />
-            清空筛选
-          </button>
-        )}
-      </form>
+          {hasFilters && (
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => {
+                if (keywordInputRef.current) {
+                  keywordInputRef.current.value = "";
+                }
+                updateSearchParams("", "");
+              }}
+              className="flex items-center gap-1.5 rounded-xl border border-border px-4 py-2.5 text-sm text-text-secondary transition hover:border-white/15 hover:text-white disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              <XIcon size={14} />
+              清空筛选
+            </button>
+          )}
+        </form>
+
+        <div
+          aria-live="polite"
+          className="min-h-5 px-1 pt-2 text-sm text-text-tertiary"
+        >
+          {isPending ? "正在更新筛选结果..." : null}
+        </div>
+      </div>
 
       <p className="text-sm text-text-tertiary">
         共 {total} 个仓库，按 Stars 降序
       </p>
 
-      {loading && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-64 animate-shimmer rounded-2xl border border-border"
-            />
-          ))}
-        </div>
-      )}
-
-      {!loading && error && (
-        <div className="rounded-xl border border-rose-500/20 bg-rose-500/8 p-5 text-sm text-rose-200">
-          {error}
-        </div>
-      )}
-
-      {!loading && !error && items.length === 0 && (
+      {items.length === 0 && (
         <div className="rounded-xl border border-dashed border-border py-20 text-center">
           <p className="text-lg font-medium text-white">暂无匹配仓库</p>
           <p className="mt-2 text-sm text-text-tertiary">
@@ -197,8 +220,13 @@ export function RepoList() {
         </div>
       )}
 
-      {!loading && !error && items.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {items.length > 0 && (
+        <div
+          className={[
+            "grid gap-4 transition-opacity duration-200 sm:grid-cols-2 lg:grid-cols-3",
+            isPending ? "opacity-85" : "opacity-100",
+          ].join(" ")}
+        >
           {items.map((repo) => (
             <RepoCard key={repo.id} repo={repo} />
           ))}
