@@ -10,12 +10,17 @@ import {
   CheckIcon,
 } from "@phosphor-icons/react";
 
-import { REPO_CATEGORIES } from "@/src/lib/repo-categories";
+import {
+  CATEGORY_GROUPS_LIST,
+  REPO_CATEGORY_GROUPS,
+  type RepoCategoryGroup,
+  getCategoriesByGroup,
+} from "@/src/lib/repo-categories";
 import type { RepoListItem } from "@/types/repo";
 
 import { RepoCard } from "./RepoCard";
 
-function CategorySelect({
+function GroupSelect({
   value,
   onChange,
   disabled = false,
@@ -51,11 +56,18 @@ function CategorySelect({
             : "border-border bg-surface text-text-secondary hover:border-white/15 hover:text-white",
         ].join(" ")}
       >
-        <FunnelIcon size={16} weight="duotone" className="text-accent shrink-0" />
-        <span className="whitespace-nowrap">{value || "全部分类"}</span>
+        <FunnelIcon
+          size={16}
+          weight="duotone"
+          className="text-accent shrink-0"
+        />
+        <span className="whitespace-nowrap">{value || "全部分组"}</span>
         <CaretDownIcon
           size={14}
-          className={["shrink-0 transition-transform duration-200", open && "rotate-180"].join(" ")}
+          className={[
+            "shrink-0 transition-transform duration-200",
+            open && "rotate-180",
+          ].join(" ")}
         />
       </button>
 
@@ -63,27 +75,142 @@ function CategorySelect({
         <div className="absolute left-0 z-50 mt-1.5 w-44 origin-top animate-fade-in rounded-xl border border-border bg-surface-elevated py-1 shadow-xl shadow-black/30 backdrop-blur-sm">
           <button
             type="button"
-            onClick={() => { onChange(""); setOpen(false); }}
+            onClick={() => {
+              onChange("");
+              setOpen(false);
+            }}
             className="flex w-full items-center gap-2 px-3.5 py-2 text-sm transition-colors hover:bg-white/5"
           >
             <span className="flex h-4 w-4 shrink-0 items-center justify-center">
-              {!value && <CheckIcon size={14} weight="bold" className="text-accent" />}
+              {!value && (
+                <CheckIcon size={14} weight="bold" className="text-accent" />
+              )}
             </span>
-            全部分类
+            全部分组
           </button>
-          {REPO_CATEGORIES.map((cat) => (
+          {CATEGORY_GROUPS_LIST.map((group) => (
             <button
-              key={cat}
+              key={group}
               type="button"
-              onClick={() => { onChange(cat); setOpen(false); }}
+              onClick={() => {
+                onChange(group);
+                setOpen(false);
+              }}
               className="flex w-full items-center gap-2 px-3.5 py-2 text-sm transition-colors hover:bg-white/5"
             >
               <span className="flex h-4 w-4 shrink-0 items-center justify-center">
-                {value === cat && <CheckIcon size={14} weight="bold" className="text-accent" />}
+                {value === group && (
+                  <CheckIcon size={14} weight="bold" className="text-accent" />
+                )}
               </span>
-              {cat}
+              {group}
             </button>
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CategorySelect({
+  value,
+  onChange,
+  group,
+  disabled = false,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  group: string;
+  disabled?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const categories = useMemo(() => {
+    if (!group) return null;
+    return getCategoriesByGroup(group as RepoCategoryGroup);
+  }, [group]);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen((v) => !v)}
+        className={[
+          "flex items-center gap-2 rounded-xl border py-2.5 pl-3.5 pr-3 text-sm outline-none transition disabled:cursor-not-allowed disabled:opacity-70",
+          open
+            ? "border-accent/40 ring-1 ring-accent/20 bg-surface text-white"
+            : "border-border bg-surface text-text-secondary hover:border-white/15 hover:text-white",
+        ].join(" ")}
+      >
+        <FunnelIcon
+          size={16}
+          weight="duotone"
+          className="text-accent shrink-0"
+        />
+        <span className="whitespace-nowrap">{value || "全部分类"}</span>
+        <CaretDownIcon
+          size={14}
+          className={[
+            "shrink-0 transition-transform duration-200",
+            open && "rotate-180",
+          ].join(" ")}
+        />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 z-50 mt-1.5 w-44 origin-top animate-fade-in rounded-xl border border-border bg-surface-elevated py-1 shadow-xl shadow-black/30 backdrop-blur-sm">
+          <button
+            type="button"
+            onClick={() => {
+              onChange("");
+              setOpen(false);
+            }}
+            className="flex w-full items-center gap-2 px-3.5 py-2 text-sm transition-colors hover:bg-white/5"
+          >
+            <span className="flex h-4 w-4 shrink-0 items-center justify-center">
+              {!value && (
+                <CheckIcon size={14} weight="bold" className="text-accent" />
+              )}
+            </span>
+            全部分类
+          </button>
+          {(categories ?? Object.values(REPO_CATEGORY_GROUPS).flat()).map(
+            (cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => {
+                  onChange(cat);
+                  setOpen(false);
+                }}
+                className="flex w-full items-center gap-2 px-3.5 py-2 text-sm transition-colors hover:bg-white/5"
+              >
+                <span className="flex h-4 w-4 shrink-0 items-center justify-center">
+                  {value === cat && (
+                    <CheckIcon
+                      size={14}
+                      weight="bold"
+                      className="text-accent"
+                    />
+                  )}
+                </span>
+                {cat}
+              </button>
+            ),
+          )}
         </div>
       )}
     </div>
@@ -101,18 +228,27 @@ export function RepoList({ items, total }: RepoListProps) {
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
+  const group = searchParams.get("group") ?? "";
   const category = searchParams.get("category") ?? "";
   const keyword = searchParams.get("keyword") ?? "";
 
   const keywordInputRef = useRef<HTMLInputElement | null>(null);
 
   const hasFilters = useMemo(
-    () => Boolean(category || keyword.trim()),
-    [category, keyword],
+    () => Boolean(group || category || keyword.trim()),
+    [group, category, keyword],
   );
 
-  function updateSearchParams(nextCategory: string, nextKeyword: string) {
+  function updateSearchParams(
+    nextGroup: string,
+    nextCategory: string,
+    nextKeyword: string,
+  ) {
     const params = new URLSearchParams();
+
+    if (nextGroup) {
+      params.set("group", nextGroup);
+    }
 
     if (nextCategory) {
       params.set("category", nextCategory);
@@ -151,7 +287,11 @@ export function RepoList({ items, total }: RepoListProps) {
           onSubmit={(event) => {
             event.preventDefault();
             const formData = new FormData(event.currentTarget);
-            updateSearchParams(category, String(formData.get("keyword") ?? ""));
+            updateSearchParams(
+              group,
+              category,
+              String(formData.get("keyword") ?? ""),
+            );
           }}
         >
           <div className="relative min-w-[240px] flex-1">
@@ -170,12 +310,28 @@ export function RepoList({ items, total }: RepoListProps) {
             />
           </div>
 
+          <GroupSelect
+            key={`group-${group}-${isPending ? "pending" : "idle"}`}
+            value={group}
+            disabled={isPending}
+            onChange={(v) => {
+              const nextKeyword =
+                keywordInputRef.current?.value ?? keyword;
+              updateSearchParams(v, "", nextKeyword);
+            }}
+          />
+
           <CategorySelect
-            key={`${category}-${isPending ? "pending" : "idle"}`}
+            key={`cat-${group}-${category}-${isPending ? "pending" : "idle"}`}
             value={category}
+            group={group}
             disabled={isPending}
             onChange={(v) =>
-              updateSearchParams(v, keywordInputRef.current?.value ?? keyword)
+              updateSearchParams(
+                group,
+                v,
+                keywordInputRef.current?.value ?? keyword,
+              )
             }
           />
 
@@ -187,7 +343,7 @@ export function RepoList({ items, total }: RepoListProps) {
                 if (keywordInputRef.current) {
                   keywordInputRef.current.value = "";
                 }
-                updateSearchParams("", "");
+                updateSearchParams("", "", "");
               }}
               className="flex items-center gap-1.5 rounded-xl border border-border px-4 py-2.5 text-sm text-text-secondary transition hover:border-white/15 hover:text-white disabled:cursor-not-allowed disabled:opacity-70"
             >
@@ -214,7 +370,7 @@ export function RepoList({ items, total }: RepoListProps) {
           <p className="text-lg font-medium text-white">暂无匹配仓库</p>
           <p className="mt-2 text-sm text-text-tertiary">
             {hasFilters
-              ? "当前筛选条件下没有结果，请尝试更换分类或关键词。"
+              ? "当前筛选条件下没有结果，请尝试更换分组、分类或关键词。"
               : "还没有分析过仓库，先回到首页提交一个 GitHub 地址吧。"}
           </p>
         </div>

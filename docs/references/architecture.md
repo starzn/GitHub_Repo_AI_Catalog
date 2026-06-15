@@ -58,7 +58,7 @@
 - `repo-analyzer.ts`
   - 主流程编排：解析 -> 抓取 -> AI -> upsert
 - `repo-categories.ts`
-  - 分类候选集
+  - 分组与分类候选集（分组 → 分类两级结构）
 - `prisma.ts`
   - PrismaClient 单例
 - `errors.ts`
@@ -90,7 +90,7 @@ Zod 校验请求体
         ->
 调用 GitHub API 拉取仓库信息、README、根目录文件
         ->
-调用 OpenAI 兼容接口生成 summary/category/tags/analysisReason
+调用 OpenAI 兼容接口生成 summary/categoryGroup/category/tags/analysisReason
         ->
 Prisma upsert 写入数据库
         ->
@@ -206,6 +206,7 @@ Prisma 按 id 查询
   - `readmeText`
 - AI 分析结果
   - `summary`
+  - `categoryGroup`
   - `category`
   - `tags`
   - `analysisReason`
@@ -219,6 +220,7 @@ Prisma 按 id 查询
 - `fullName` 唯一
 - `htmlUrl` 唯一
 - `category` 建索引
+- `categoryGroup` 建索引
 - `owner + name` 建联合索引
 - `analyzedAt` 建索引
 
@@ -226,7 +228,7 @@ Prisma 按 id 查询
 
 ### 6.1 分类必须固定
 
-AI 分类不允许自由发挥，必须从 `REPO_CATEGORIES` 中选择一个。
+AI 分类不允许自由发挥，必须从 `REPO_CATEGORIES` 中选择一个，且 `categoryGroup` 必须与 `category` 所属分组一致。
 
 ### 6.2 重复分析必须更新
 

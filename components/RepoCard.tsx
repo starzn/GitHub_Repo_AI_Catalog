@@ -22,7 +22,7 @@ export function RepoCard({ repo }: RepoCardProps) {
   return (
     <article className="group relative flex h-full flex-col rounded-2xl border border-border bg-surface p-6 transition hover:border-accent/15 hover:bg-surface-elevated">
       <div className="flex items-start justify-between gap-3">
-        <CategoryBadge category={repo.category} compact />
+        <CategoryBadge category={repo.category} categoryGroup={repo.categoryGroup} compact />
         <a
           href={repo.htmlUrl}
           target="_blank"

@@ -180,7 +180,7 @@ export function RepoDetailView({ repoId }: RepoDetailViewProps) {
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-3">
-          <CategoryBadge category={repo.category} />
+          <CategoryBadge category={repo.category} categoryGroup={repo.categoryGroup} />
           <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
             {repo.fullName}
           </h1>

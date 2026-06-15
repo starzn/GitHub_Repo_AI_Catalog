@@ -46,6 +46,7 @@ model GithubRepo {
   license        String?
   topics         String[] @default([])
   summary        String   @db.Text
+  categoryGroup  String   @default("其他")
   category       String
   tags           String[] @default([])
   analysisReason String   @db.Text
@@ -54,6 +55,7 @@ model GithubRepo {
   updatedAt      DateTime @updatedAt
 
   @@index([category])
+  @@index([categoryGroup])
   @@index([owner, name])
   @@index([analyzedAt])
 }
@@ -102,8 +104,10 @@ model GithubRepo {
 
 - `summary`
   - 中文总结
+- `categoryGroup`
+  - 分组名称，如"技术开发"、"数据与AI"等
 - `category`
-  - 固定候选集中的分类
+  - 固定候选集中的分类，必须属于对应的 categoryGroup
 - `tags`
   - AI 生成的标签数组
 - `analysisReason`
@@ -124,6 +128,8 @@ model GithubRepo {
 
 - `@@index([category])`
   - 用于分类筛选
+- `@@index([categoryGroup])`
+  - 用于分组筛选
 - `@@index([owner, name])`
   - 用于仓库维度检索
 - `@@index([analyzedAt])`
@@ -289,7 +295,8 @@ Prisma 单例位于：
 
 特点：
 
-- 支持 `category`
+- 支持 `group`（按分组筛选）
+- 支持 `category`（按分类筛选）
 - 支持 `keyword`
 - 返回摘要字段
 - 排序按 `stars desc`, `updatedAt desc`

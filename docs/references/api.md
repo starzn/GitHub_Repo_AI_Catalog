@@ -108,6 +108,7 @@
    - 根目录文件
 5. 调用 OpenAI 兼容接口生成：
    - `summary`
+   - `categoryGroup`
    - `category`
    - `tags`
    - `analysisReason`
@@ -134,6 +135,7 @@
     "license": "MIT",
     "topics": ["nextjs", "react"],
     "summary": "Next.js 是一个基于 React 的全栈 Web 框架...",
+    "categoryGroup": "技术开发",
     "category": "开发工具",
     "tags": ["React", "服务端渲染", "静态站点生成", "全栈框架"],
     "analysisReason": "Next.js 是一个用于构建 Web 应用的框架...",
@@ -228,6 +230,7 @@
 
 | 参数 | 类型 | 必填 | 说明 |
 |---|---|---|---|
+| `group` | `string` | 否 | 按分组精确筛选，不区分大小写 |
 | `category` | `string` | 否 | 按分类精确筛选，不区分大小写 |
 | `keyword` | `string` | 否 | 关键词搜索 |
 
@@ -256,8 +259,9 @@
 ```text
 GET /api/repos
 GET /api/repos?keyword=React
+GET /api/repos?group=技术开发
 GET /api/repos?category=开发工具
-GET /api/repos?category=开发工具&keyword=React
+GET /api/repos?group=技术开发&category=开发工具&keyword=React
 ```
 
 ### 4.6 成功响应示例
@@ -273,6 +277,7 @@ GET /api/repos?category=开发工具&keyword=React
       "htmlUrl": "https://github.com/vercel/next.js",
       "description": "The React Framework",
       "summary": "Next.js 是一个基于 React 的全栈 Web 框架...",
+      "categoryGroup": "技术开发",
       "category": "开发工具",
       "tags": ["React", "服务端渲染", "静态站点生成", "全栈框架"],
       "language": "JavaScript",
@@ -314,6 +319,7 @@ GET /api/repos?category=开发工具&keyword=React
   "license": "MIT",
   "topics": ["nextjs", "react"],
   "summary": "Next.js 是一个基于 React 的全栈 Web 框架...",
+  "categoryGroup": "技术开发",
   "category": "开发工具",
   "tags": ["React", "服务端渲染", "静态站点生成", "全栈框架"],
   "analysisReason": "Next.js 是一个用于构建 Web 应用的框架...",
@@ -399,6 +405,13 @@ curl "http://localhost:3000/api/repos?keyword=React"
 
 ```bash
 curl --get --data-urlencode "category=开发工具" \
+  "http://localhost:3000/api/repos"
+```
+
+#### 分组筛选
+
+```bash
+curl --get --data-urlencode "group=技术开发" \
   "http://localhost:3000/api/repos"
 ```
 

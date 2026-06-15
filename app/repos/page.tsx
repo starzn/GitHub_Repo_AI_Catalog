@@ -4,6 +4,7 @@ import { getRepoList } from "@/src/lib/repo-list";
 
 type ReposPageProps = {
   searchParams: Promise<{
+    group?: string;
     category?: string;
     keyword?: string;
   }>;
@@ -12,6 +13,7 @@ type ReposPageProps = {
 export default async function ReposPage({ searchParams }: ReposPageProps) {
   const params = await searchParams;
   const initialData = await getRepoList({
+    group: params.group,
     category: params.category,
     keyword: params.keyword,
   });

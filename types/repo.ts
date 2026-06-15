@@ -6,6 +6,7 @@ export type RepoListItem = {
   htmlUrl: string;
   description: string | null;
   summary: string;
+  categoryGroup: string;
   category: string;
   tags: string[];
   language: string;

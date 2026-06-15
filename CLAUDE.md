@@ -33,16 +33,16 @@ pnpm prisma db push       # Push schema to DB (no migration files)
 | Method | Path | Purpose |
 |--------|------|---------|
 | `POST` | `/api/repos/analyze` | Analyze a GitHub repo and upsert into DB |
-| `GET` | `/api/repos` | List repos, supports `category` and `keyword` query params |
+| `GET` | `/api/repos` | List repos, supports `group`, `category` and `keyword` query params |
 | `GET` | `/api/repos/:id` | Single repo detail by ID |
 
 ### Backend Modules (`src/lib/`)
 
 - **validators.ts** — GitHub URL parsing (auto-prepends `https://`, only allows `github.com`) and Zod request body validation
 - **github.ts** — GitHub REST API wrapper. Fetches repo info, README (base64 decoded), and root file listing concurrently via `Promise.all`. All requests use `cache: "no-store"`.
-- **ai.ts** — Calls OpenAI-compatible `chat/completions` with `response_format: { type: "json_object" }`. Zod validates AI output structure. AI must choose category from a fixed set defined in `repo-categories.ts`.
+- **ai.ts** — Calls OpenAI-compatible `chat/completions` with `response_format: { type: "json_object" }`. Zod validates AI output structure. AI must choose categoryGroup and category from fixed sets defined in `repo-categories.ts`.
 - **repo-analyzer.ts** — Orchestrates the full pipeline: parse URL → GitHub snapshot → AI analysis → Prisma upsert (uses `fullName` as the unique key)
-- **repo-categories.ts** — Fixed category enum (`REPO_CATEGORIES`) that constrains AI classification output
+- **repo-categories.ts** — Two-level category system: `REPO_CATEGORY_GROUPS` maps groups (技术开发/数据与AI/区块链与金融/其他) to categories. Exports `REPO_CATEGORIES`, `getCategoryGroup()`, `getCategoriesByGroup()`.
 - **prisma.ts** — PrismaClient singleton (pinned to `globalThis` in dev to prevent hot-reload connection leaks)
 - **errors.ts** — `AppError` class with `message`, `statusCode`, and `code` for unified error responses
 
@@ -51,22 +51,22 @@ pnpm prisma db push       # Push schema to DB (no migration files)
 All UI uses Tailwind CSS v4 with a dark zinc/cyan theme. Client components are marked with `"use client"`.
 
 - **AnalyzeRepoForm** — URL input form, submits to `/api/repos/analyze`, shows inline success/error
-- **RepoList** — Fetches `/api/repos` with search params, renders `RepoCard` grid with category/keyword filtering
+- **RepoList** — Fetches `/api/repos` with search params, renders `RepoCard` grid with group/category/keyword filtering
 - **RepoCard** — Summary card for list view
 - **RepoDetailView** — Full detail view for individual repos
-- **CategoryBadge** / **TagList** — Display helpers for category and tags
+- **CategoryBadge** / **TagList** — Display helpers for category (with group prefix) and tags
 
 ### Database
 
 Single `GithubRepo` table (Prisma model + Supabase SQL migration):
 - Unique constraints on `fullName` and `htmlUrl`
-- Indexes on `category`, `[owner, name]`, `analyzedAt`
+- Indexes on `category`, `categoryGroup`, `[owner, name]`, `analyzedAt`
 - Upsert on `fullName` prevents duplicate records when re-analyzing the same repo
 
 ### Key Design Decisions
 
 - AI output is forced to JSON mode and validated with Zod — the system never saves unstructured or invalid AI responses
-- Category must come from the fixed `REPO_CATEGORIES` set — no free-form classification
+- Category must come from the fixed `REPO_CATEGORIES` set, and `categoryGroup` must match the group that contains that category — no free-form classification
 - `GET /api/repos/:id` error response format (`{ error: string }`) is not yet unified with the analyze endpoint's `{ success: false, error: { code, message } }` format
 - No pagination on the list endpoint yet — returns all matching results
 

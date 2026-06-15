@@ -164,7 +164,7 @@ export function AnalyzeRepoForm() {
 
           <div className="mt-4 flex flex-wrap gap-2 text-xs text-text-tertiary">
             <span className="rounded-md border border-border bg-surface px-2.5 py-1">
-              {result.category}
+              {result.categoryGroup} / {result.category}
             </span>
             <span className="rounded-md border border-border bg-surface px-2.5 py-1">
               {result.tags.join(" / ")}

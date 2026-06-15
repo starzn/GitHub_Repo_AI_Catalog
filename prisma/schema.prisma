@@ -24,6 +24,7 @@ model GithubRepo {
   topics         String[] @default([])
   summary        String   @db.Text
   category       String
+  categoryGroup  String   @default("其他")
   tags           String[] @default([])
   analysisReason String   @db.Text
   analyzedAt     DateTime
@@ -31,6 +32,7 @@ model GithubRepo {
   updatedAt      DateTime @updatedAt
 
   @@index([category])
+  @@index([categoryGroup])
   @@index([owner, name])
   @@index([analyzedAt])
 }

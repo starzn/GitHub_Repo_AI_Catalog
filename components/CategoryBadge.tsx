@@ -1,12 +1,16 @@
 type CategoryBadgeProps = {
   category: string;
+  categoryGroup?: string;
   compact?: boolean;
 };
 
 export function CategoryBadge({
   category,
+  categoryGroup,
   compact = false,
 }: CategoryBadgeProps) {
+  const label = categoryGroup ? `${categoryGroup} / ${category}` : category;
+
   return (
     <span
       className={[
@@ -22,7 +26,7 @@ export function CategoryBadge({
           compact ? "h-1.5 w-1.5" : "h-2 w-2",
         ].join(" ")}
       />
-      {category}
+      {label}
     </span>
   );
 }
